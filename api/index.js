@@ -32,6 +32,14 @@ export default async function handler(req, res) {
     });
   }
 
+  // Ensure req.url starts with /api so Express routes (/api/auth, /api/workouts, etc.) match
+  if (req.url && !req.url.startsWith('/api')) {
+    req.url = `/api${req.url.startsWith('/') ? '' : '/'}${req.url}`;
+  }
+  if (req.originalUrl && !req.originalUrl.startsWith('/api')) {
+    req.originalUrl = `/api${req.originalUrl.startsWith('/') ? '' : '/'}${req.originalUrl}`;
+  }
+
   // Forward request to Express app
   return app(req, res);
 }
