@@ -1,22 +1,41 @@
-import fs from 'fs';
-import { execSync } from 'child_process';
+import fs from 'node:fs';
+import { execSync } from 'node:child_process';
 
-const inRoot = fs.existsSync('./client');
-const targetDir = inRoot ? './client' : '.';
+const hasClient = fs.existsSync('./client/package.json');
+const targetDir = hasClient ? './client' : '.';
 
-console.log(`[Build] Location: ${inRoot ? 'Repository Root' : 'client directory'}`);
 console.log(`[Build] Building Vite client in: ${targetDir}`);
 
-// Install dependencies and run Vite production build
-execSync('npm install', { cwd: targetDir, stdio: 'inherit' });
-execSync('npm run build', { cwd: targetDir, stdio: 'inherit' });
+try {
+execSync('npm run build', {
+cwd: targetDir,
+stdio: 'inherit'
+});
 
-// Ensure output is available at ./dist for Vercel
-if (inRoot && fs.existsSync('./client/dist')) {
-  try {
-    fs.cpSync('./client/dist', './dist', { recursive: true, force: true });
-    console.log('[Build] Successfully synchronized client/dist to ./dist for Vercel.');
-  } catch (err) {
-    console.warn('[Build] Warning copying dist directory:', err.message);
-  }
+const sourceDist = `${targetDir}/dist`;
+
+if (!fs.existsSync(sourceDist)) {
+throw new Error(`Build output directory not found: ${sourceDist}`);
+}
+
+if (hasClient) {
+fs.cpSync(sourceDist, './dist', {
+recursive: true,
+force: true
+});
+
+```
+console.log('[Build] Copied client/dist to root dist.');
+```
+
+}
+
+if (!fs.existsSync('./dist/index.html')) {
+throw new Error('dist/index.html was not found after the build.');
+}
+
+console.log('[Build] Build completed successfully.');
+} catch (error) {
+console.error('[Build] Failed:', error.message);
+process.exit(1);
 }
